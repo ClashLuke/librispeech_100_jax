@@ -69,12 +69,9 @@ class MaskConv(nn.Module):
         x = module(x, use_running_average=training)
       else:
         x = module(x)
-      mask = jnp.zeros_like(x)
-      for i, length in enumerate(lengths):
-        length = length.item()
-        if mask[i].shape[2] - length > 0:
-          mask = mask.at[i, :, :, length:].set(1)
-      x = jnp.where(mask, x, 0)
+      mask = jnp.arange(x.shape[2]).reshape(1, 1, 1, -1) >= lengths.reshape(-1, 1, 1, 1)
+      mask = mask.astype(jnp.float32)
+      x *= mask
     x = x.transpose(0, 3, 1, 2)
     return x, lengths
 
